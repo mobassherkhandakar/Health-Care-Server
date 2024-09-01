@@ -25,7 +25,7 @@ const logger = createLogger({
         'logs',
         'winston',
         'successes',
-        'HCare-%DATE%-success.log'
+        'HCare-%DATE%-success.log',
       ),
       datePattern: 'YYYY-DD-MM-HH',
       zippedArchive: true,
@@ -46,7 +46,7 @@ const errorlogger = createLogger({
         'logs',
         'winston',
         'errors',
-        'HCare-%DATE%-error.log'
+        'HCare-%DATE%-error.log',
       ),
       datePattern: 'YYYY-DD-MM-HH',
       zippedArchive: true,
