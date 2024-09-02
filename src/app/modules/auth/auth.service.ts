@@ -13,6 +13,7 @@ import {
   IRefreshTokenResponse,
 } from './auth.interface';
 import { AuthUtils } from './auth.utils';
+import { sendEmail } from './sendResetMail';
 
 const loginUser = async (paylod: ILoginUser): Promise<ILoginUserResponse> => {
   const { email, password } = paylod;
@@ -122,9 +123,72 @@ const changePassword = async (
     },
   });
 };
-
+const forgetPassword = async (email: string) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email: email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  if (!isUserExist) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User does not exist!');
+  }
+  const passResetToken = await jwtHelpers.createToken(
+    {
+      id: isUserExist.id,
+      email: isUserExist.email,
+      role: isUserExist.role,
+    },
+    config.jwt.secret as Secret,
+    config.jwt.expires_in as string,
+  );
+  const resetLink =
+    config.reset_link + `?id=${isUserExist.id}$token=${passResetToken}`;
+  await sendEmail(
+    email,
+    `
+      <div>
+        <p>Dear ${isUserExist.role},</p>
+        <p>Your password reset link: <a href=${resetLink}><button>RESET PASSWORD<button/></a></p>
+        <p>Thank you</p>
+      </div>
+  `,
+  );
+};
+const resetPassword = async (
+  paylod: { id: string; newPassword: string },
+  token: string,
+) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      id: paylod.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  if (!isUserExist) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User not found!');
+  }
+  const verifydUser = await jwtHelpers.verifyToken(
+    token,
+    config.jwt.secret as Secret,
+  );
+  if (!verifydUser) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Something went wrong!');
+  }
+  const heasPassword = await hashedPassword(paylod.newPassword);
+  await prisma.user.update({
+    where: {
+      id: paylod.id,
+    },
+    data: {
+      password: heasPassword,
+    },
+  });
+};
 export const AuthService = {
   loginUser,
   refreshToken,
   changePassword,
+  forgetPassword,
+  resetPassword,
 };

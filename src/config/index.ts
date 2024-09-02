@@ -6,6 +6,9 @@ export default {
   port: process.env.PORT,
   database_url: process.env.DATABASE_URL,
   bycrypt_salt_rounds: process.env.SALT_ROUND,
+  reset_link: process.env.RESET_LINK,
+  email: process.env.EMAIL,
+  app_pass: process.env.APP_PASS,
   jwt: {
     secret: process.env.JWT_SECRET,
     refresh_secret: process.env.REFRESH_SECRET,
